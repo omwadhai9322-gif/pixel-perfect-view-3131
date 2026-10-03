@@ -57,8 +57,8 @@ function BookingForm({
     e.preventDefault();
     const ci = new Date(checkIn);
     const co = new Date(checkOut);
-    if (!(co > ci)) return toast.error("Check-out must be after check-in.");
-    if (!/^[+\d][\d\s-]{5,}$/.test(phone.trim())) return toast.error("Enter a valid contact number.");
+    if (!(co > ci)) { toast.error("Check-out must be after check-in."); return; }
+    if (!/^[+\d][\d\s-]{5,}$/.test(phone.trim())) { toast.error("Enter a valid contact number."); return; }
     setBusy(true);
     try {
       if (booking) {
@@ -157,7 +157,7 @@ export function RoomDialog({
   async function rename() {
     if (!newName.trim()) return;
     const { error } = await supabase.from("rooms").update({ name: newName.trim() }).eq("id", room!.id);
-    if (error) return toast.error(friendlyError(error));
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Room renamed");
     onChanged();
     setView(cur ? "main" : "new");
@@ -287,7 +287,7 @@ export function FloorDialog({
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (count < 0 || count > 200) return toast.error("Room count must be between 0 and 200.");
+    if (count < 0 || count > 200) { toast.error("Room count must be between 0 and 200."); return; }
     setBusy(true);
     try {
       let floorId = floor?.id;
@@ -331,11 +331,11 @@ export function FloorDialog({
       (b) => ids.has(b.room_id) && b.status === "active" && new Date(b.check_out).getTime() > Date.now(),
     );
     if (live.length) {
-      return toast.error(`This floor has ${live.length} current or upcoming booking(s). Cancel them first.`);
+      { toast.error(`This floor has ${live.length} current or upcoming booking(s). Cancel them first.`); return; }
     }
     if (!confirm(`Delete ${floor.name} and its ${floorRooms.length} rooms? Past booking history for these rooms will also be removed.`)) return;
     const { error } = await supabase.from("floors").delete().eq("id", floor.id);
-    if (error) return toast.error(friendlyError(error));
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success("Floor removed");
     onChanged();
     onClose();
@@ -379,10 +379,10 @@ function RoomRemover({ rooms, data, onChanged }: { rooms: Room[]; data: BoardDat
     const live = data.bookings.some(
       (b) => b.room_id === r.id && b.status === "active" && new Date(b.check_out).getTime() > Date.now(),
     );
-    if (live) return toast.error(`Room ${r.name} has current or upcoming bookings.`);
+    if (live) { toast.error(`Room ${r.name} has current or upcoming bookings.`); return; }
     if (!confirm(`Remove room ${r.name}?`)) return;
     const { error } = await supabase.from("rooms").delete().eq("id", r.id);
-    if (error) return toast.error(friendlyError(error));
+    if (error) { toast.error(friendlyError(error)); return; }
     toast.success(`Room ${r.name} removed`);
     onChanged();
   }
