@@ -235,7 +235,8 @@ export function RoomDialog({
               <p className="font-mono text-xs">{fmtFull(cur.check_in)} → {fmtFull(cur.check_out)}</p>
               <div className="flex gap-2 pt-2">
                 <button className={btnGhost} onClick={() => { setEditing(cur); setView("edit"); }}>Edit</button>
-                <button className={btnDanger} onClick={() => doCancel(cur)}>Cancel booking</button>
+                <button className={btnGhost} onClick={() => doCancel(cur)}>Cancel booking</button>
+                <button className={btnDanger} onClick={() => doDelete(cur)}>Delete</button>
               </div>
             </div>
           )}
@@ -251,7 +252,8 @@ export function RoomDialog({
                   <p className="font-mono text-[11px]">{fmtFull(b.check_in)} → {fmtFull(b.check_out)}</p>
                   <div className="mt-2 flex gap-2">
                     <button className={btnGhost} onClick={() => { setEditing(b); setView("edit"); }}>Edit</button>
-                    <button className={btnDanger} onClick={() => doCancel(b)}>Cancel</button>
+                    <button className={btnGhost} onClick={() => doCancel(b)}>Cancel</button>
+                    <button className={btnDanger} onClick={() => doDelete(b)}>Delete</button>
                   </div>
                 </div>
               ))}
