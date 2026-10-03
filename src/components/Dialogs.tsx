@@ -179,6 +179,17 @@ export function RoomDialog({
     }
   }
 
+  async function doDelete(b: Booking) {
+    if (!confirm(`Permanently delete the booking for ${b.customers?.name}? This cannot be undone.`)) return;
+    try {
+      await deleteBooking(b.id);
+      toast.success("Booking deleted");
+      onChanged();
+    } catch (e) {
+      toast.error(friendlyError(e));
+    }
+  }
+
   const done = () => {
     onChanged();
     onClose();
