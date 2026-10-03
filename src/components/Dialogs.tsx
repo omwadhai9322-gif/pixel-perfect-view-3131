@@ -459,17 +459,28 @@ export function HistoryDialog({
               </div>
               <p className="font-mono text-[11px] text-muted-foreground">{b.customers?.phone}</p>
               <p className="font-mono text-[11px]">{fmtFull(b.check_in)} → {fmtFull(b.check_out)}</p>
-              {live && (
+              <div className="mt-1 flex gap-3">
+                {live && (
+                  <button
+                    className="font-mono text-[10px] uppercase text-book hover:underline"
+                    onClick={async () => {
+                      if (!confirm("Cancel this booking?")) return;
+                      try { await cancelBooking(b.id); toast.success("Booking cancelled"); onChanged(); } catch (e) { toast.error(friendlyError(e)); }
+                    }}
+                  >
+                    Cancel booking
+                  </button>
+                )}
                 <button
-                  className="mt-1 font-mono text-[10px] uppercase text-book hover:underline"
+                  className="font-mono text-[10px] uppercase text-book hover:underline"
                   onClick={async () => {
-                    if (!confirm("Cancel this booking?")) return;
-                    try { await cancelBooking(b.id); toast.success("Booking cancelled"); onChanged(); } catch (e) { toast.error(friendlyError(e)); }
+                    if (!confirm("Permanently delete this booking? This cannot be undone.")) return;
+                    try { await deleteBooking(b.id); toast.success("Booking deleted"); onChanged(); } catch (e) { toast.error(friendlyError(e)); }
                   }}
                 >
-                  Cancel booking
+                  Delete
                 </button>
-              )}
+              </div>
             </div>
           );
         })}
