@@ -60,50 +60,74 @@ function Board() {
   }, [data]);
 
   if (isLoading) return <div className="grid min-h-screen place-items-center label-mono">Loading rooms…</div>;
-  if (error || !data) return <div className="grid min-h-screen place-items-center font-mono text-sm text-book">Could not load data.</div>;
+  if (error || !data) return <div className="grid min-h-screen place-items-center text-sm font-medium text-book">Could not load data.</div>;
 
   const s = q.trim().toLowerCase();
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0 z-10 border-b border-border bg-background">
-        <div className="flex flex-wrap items-center gap-3 px-5 py-3">
-          <div className="mr-2 flex items-center gap-2">
-            <span className="inline-block size-3 rounded-full bg-accent" />
-            <span className="font-mono text-lg font-bold tracking-tight">ROOMBOARD</span>
-            <span className="label-mono hidden sm:inline">live ops</span>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+        {/* Header */}
+        <header className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary shadow-sm">
+              <div className="size-4 rounded-[4px] bg-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold leading-tight tracking-tight">RoomBoard</h1>
+              <p className="text-[11px] font-medium text-muted-foreground">Live room status</p>
+            </div>
           </div>
-          <div className="relative order-last w-full sm:order-none sm:ml-auto sm:w-72">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-muted-foreground">⌕</span>
-            <input className="field py-1.5 pl-8 font-mono text-xs" placeholder="Search room or customer…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="relative order-last w-full sm:order-none sm:ml-auto sm:w-64">
+            <svg className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              className="w-full rounded-full border border-transparent bg-muted py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-accent focus:bg-card"
+              placeholder="Search room or customer…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
           </div>
-          <div className="ml-auto flex gap-2 sm:ml-0">
-            <button onClick={() => setHistory(true)} className="rounded-md border border-border px-3 py-2 font-mono text-xs uppercase tracking-wide hover:border-accent">History</button>
-            <button onClick={() => setFloorDlg({ open: true, floor: null })} className="rounded-md bg-primary px-4 py-2 font-mono text-xs font-bold uppercase tracking-wide text-primary-foreground hover:bg-accent">+ Add floor</button>
-            <button onClick={() => supabase.auth.signOut()} className="font-mono text-[10px] uppercase text-muted-foreground hover:text-foreground">Sign out</button>
+          <div className="ml-auto flex items-center gap-2 sm:ml-0">
+            <button
+              onClick={() => setHistory(true)}
+              className="rounded-full border border-border bg-card px-4 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:border-accent hover:text-foreground"
+            >
+              History
+            </button>
+            <button
+              onClick={() => setFloorDlg({ open: true, floor: null })}
+              className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:opacity-90"
+            >
+              + Add floor
+            </button>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="px-2 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Sign out
+            </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section className="border-b border-border">
-        <div className="grid grid-cols-2 md:grid-cols-4">
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Total rooms" value={stats.total} />
-          <Stat label="Available" value={stats.total - stats.booked} tone="text-avail" />
-          <Stat label="Booked" value={stats.booked} tone="text-book" />
-          <Stat label="Floors" value={data.floors.length} last />
+          <Stat label="Available" value={stats.total - stats.booked} kind="avail" />
+          <Stat label="Booked" value={stats.booked} kind="book" />
+          <Stat label="Floors" value={data.floors.length} />
         </div>
-      </section>
 
-      <main className="space-y-5 p-5">
+        {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="label-mono">Filter</span>
-          <Chip active={filter === "all"} onClick={() => setFilter("all")}>All</Chip>
+          <Chip active={filter === "all"} onClick={() => setFilter("all")}>All rooms</Chip>
           <Chip active={filter === "avail"} tone="avail" onClick={() => setFilter("avail")}>Available</Chip>
           <Chip active={filter === "booked"} tone="book" onClick={() => setFilter("booked")}>Booked</Chip>
           {data.floors.length > 1 && (
             <>
-              <span className="label-mono ml-3">Floor</span>
-              <Chip active={!floorFilter} onClick={() => setFloorFilter(null)}>All</Chip>
+              <div className="mx-1 h-5 w-px bg-border" />
+              <Chip active={!floorFilter} onClick={() => setFloorFilter(null)}>All floors</Chip>
               {data.floors.map((f) => (
                 <Chip key={f.id} active={floorFilter === f.id} onClick={() => setFloorFilter(f.id)}>{f.name}</Chip>
               ))}
@@ -112,10 +136,15 @@ function Board() {
         </div>
 
         {data.floors.length === 0 && (
-          <div className="rounded-lg border border-dashed border-border p-10 text-center">
-            <p className="font-mono text-sm font-bold">No floors yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Add a floor and enter how many rooms it has — the room boxes are created for you.</p>
-            <button onClick={() => setFloorDlg({ open: true, floor: null })} className="mt-4 rounded-md bg-primary px-4 py-2 font-mono text-xs font-bold uppercase tracking-wide text-primary-foreground hover:bg-accent">+ Add first floor</button>
+          <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center shadow-sm">
+            <p className="text-base font-bold">No floors yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add a floor and enter how many rooms it has — the room cards are created for you.</p>
+            <button
+              onClick={() => setFloorDlg({ open: true, floor: null })}
+              className="mt-5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:opacity-90"
+            >
+              + Add first floor
+            </button>
           </div>
         )}
 
@@ -137,47 +166,53 @@ function Board() {
             });
             if ((s || filter !== "all") && shown.length === 0) return null;
             return (
-              <div key={f.id}>
-                <div className="mb-2 flex items-baseline gap-2">
-                  <span className="font-mono text-sm font-bold">{f.name}</span>
-                  <span className="label-mono">{all.length} rooms · {free} free</span>
-                  <button onClick={() => setFloorDlg({ open: true, floor: f })} className="ml-auto font-mono text-[10px] uppercase tracking-wide text-muted-foreground hover:text-accent">Edit floor</button>
+              <section key={f.id} className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <div className="mb-4 flex items-baseline gap-3">
+                  <h2 className="text-base font-bold tracking-tight">{f.name}</h2>
+                  <span className="text-xs font-medium text-muted-foreground">{all.length} rooms · {free} free</span>
+                  <button
+                    onClick={() => setFloorDlg({ open: true, floor: f })}
+                    className="ml-auto text-xs font-semibold text-muted-foreground transition-colors hover:text-accent"
+                  >
+                    Edit floor
+                  </button>
                 </div>
                 {all.length === 0 ? (
-                  <p className="font-mono text-xs text-muted-foreground">No rooms — use Edit floor to add some.</p>
+                  <p className="text-sm text-muted-foreground">No rooms — use Edit floor to add some.</p>
                 ) : (
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-8 xl:grid-cols-10">
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
                     {shown.map((r) => {
                       const b = currentBooking(data.bookings, r.id);
                       return (
                         <button
                           key={r.id}
                           onClick={() => setRoom(r)}
-                          className={`flex h-[92px] flex-col justify-between rounded-md border p-2 text-left transition-colors ${
-                            b ? "border-book bg-book/10 hover:bg-book/20" : "border-avail bg-avail/10 hover:bg-avail/20"
+                          className={`group relative rounded-2xl border-2 p-4 text-center transition-all hover:-translate-y-1 hover:shadow-lg ${
+                            b
+                              ? "border-book-soft bg-book-soft/50 shadow-inner hover:border-book"
+                              : "border-transparent bg-background shadow-sm hover:border-avail"
                           }`}
                         >
-                          <div className="flex w-full justify-between">
-                            <span className="font-mono text-xs font-bold">{r.name}</span>
-                            <span className={`size-2 rounded-full ${b ? "bg-book" : "bg-avail"}`} />
-                          </div>
+                          <span className={`absolute right-3 top-3 size-2 rounded-full ${b ? "bg-book" : "bg-avail"}`} />
+                          <h3 className="text-xl font-bold text-foreground">{r.name}</h3>
                           {b ? (
-                            <div className="w-full min-w-0">
-                              <p className="truncate text-[11px] font-semibold leading-tight">{b.customers?.name}</p>
-                              <p className="font-mono text-[9px] text-muted-foreground">{fmtShort(b.check_in)}–{fmtShort(b.check_out)}</p>
+                            <div className="mt-2 space-y-0.5">
+                              <p className="truncate text-xs font-semibold text-foreground">{b.customers?.name}</p>
+                              <p className="text-[10px] font-medium text-muted-foreground">{fmtShort(b.check_in)} – {fmtShort(b.check_out)}</p>
+                              <p className="mx-auto mt-1 w-fit rounded bg-book-soft px-2 py-0.5 text-[10px] font-bold uppercase text-book">Booked</p>
                             </div>
                           ) : (
-                            <span className="font-mono text-[10px] uppercase text-avail">Free</span>
+                            <p className="mx-auto mt-2 w-fit rounded bg-avail-soft px-2 py-0.5 text-[10px] font-bold uppercase text-avail">Available</p>
                           )}
                         </button>
                       );
                     })}
                   </div>
                 )}
-              </div>
+              </section>
             );
           })}
-      </main>
+      </div>
 
       <RoomDialog room={room} data={data} onClose={() => setRoom(null)} onChanged={refresh} />
       <FloorDialog open={floorDlg.open} floor={floorDlg.floor} data={data} onClose={() => setFloorDlg({ open: false, floor: null })} onChanged={refresh} />
@@ -186,19 +221,37 @@ function Board() {
   );
 }
 
-function Stat({ label, value, tone = "", last }: { label: string; value: number; tone?: string; last?: boolean }) {
+function Stat({ label, value, kind }: { label: string; value: number; kind?: "avail" | "book" }) {
+  const cls =
+    kind === "avail"
+      ? "border-avail-soft bg-avail-soft/60"
+      : kind === "book"
+        ? "border-book-soft bg-book-soft/60"
+        : "border-border bg-card";
+  const numCls = kind === "avail" ? "text-avail" : kind === "book" ? "text-book" : "text-foreground";
   return (
-    <div className={`border-b border-border px-5 py-4 md:border-b-0 ${last ? "" : "md:border-r"}`}>
+    <div className={`rounded-2xl border p-5 shadow-sm ${cls}`}>
       <p className="label-mono">{label}</p>
-      <p className={`mt-1 font-mono text-4xl font-bold leading-none ${tone}`}>{value}</p>
+      <p className={`mt-1 text-3xl font-bold leading-none ${numCls}`}>{value}</p>
     </div>
   );
 }
 
 function Chip({ active, tone, onClick, children }: { active: boolean; tone?: "avail" | "book"; onClick: () => void; children: React.ReactNode }) {
-  const toneCls = tone === "avail" ? "border-avail text-avail" : tone === "book" ? "border-book text-book" : "border-border";
+  const base = "rounded-full px-4 py-1.5 text-xs font-semibold transition-all";
+  const cls = active
+    ? tone === "avail"
+      ? "bg-avail text-white shadow-sm"
+      : tone === "book"
+        ? "bg-book text-white shadow-sm"
+        : "bg-primary text-primary-foreground shadow-sm"
+    : tone === "avail"
+      ? "border border-avail/40 bg-card text-avail hover:border-avail"
+      : tone === "book"
+        ? "border border-book/40 bg-card text-book hover:border-book"
+        : "border border-border bg-card text-muted-foreground hover:border-accent hover:text-foreground";
   return (
-    <button onClick={onClick} className={`rounded-md border px-3 py-1 font-mono text-xs ${toneCls} ${active ? "bg-foreground/10 font-bold" : "hover:border-accent"}`}>
+    <button onClick={onClick} className={`${base} ${cls}`}>
       {children}
     </button>
   );
