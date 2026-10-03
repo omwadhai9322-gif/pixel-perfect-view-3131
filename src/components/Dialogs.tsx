@@ -123,6 +123,11 @@ export async function cancelBooking(id: string) {
   if (error) throw error;
 }
 
+export async function deleteBooking(id: string) {
+  const { error } = await supabase.from("bookings").delete().eq("id", id);
+  if (error) throw error;
+}
+
 /* ---------- Room dialog ---------- */
 export function RoomDialog({
   room,
