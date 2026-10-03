@@ -123,6 +123,11 @@ export async function cancelBooking(id: string) {
   if (error) throw error;
 }
 
+export async function deleteBooking(id: string) {
+  const { error } = await supabase.from("bookings").delete().eq("id", id);
+  if (error) throw error;
+}
+
 /* ---------- Room dialog ---------- */
 export function RoomDialog({
   room,
@@ -174,6 +179,17 @@ export function RoomDialog({
     }
   }
 
+  async function doDelete(b: Booking) {
+    if (!confirm(`Permanently delete the booking for ${b.customers?.name}? This cannot be undone.`)) return;
+    try {
+      await deleteBooking(b.id);
+      toast.success("Booking deleted");
+      onChanged();
+    } catch (e) {
+      toast.error(friendlyError(e));
+    }
+  }
+
   const done = () => {
     onChanged();
     onClose();
@@ -219,7 +235,8 @@ export function RoomDialog({
               <p className="font-mono text-xs">{fmtFull(cur.check_in)} → {fmtFull(cur.check_out)}</p>
               <div className="flex gap-2 pt-2">
                 <button className={btnGhost} onClick={() => { setEditing(cur); setView("edit"); }}>Edit</button>
-                <button className={btnDanger} onClick={() => doCancel(cur)}>Cancel booking</button>
+                <button className={btnGhost} onClick={() => doCancel(cur)}>Cancel booking</button>
+                <button className={btnDanger} onClick={() => doDelete(cur)}>Delete</button>
               </div>
             </div>
           )}
@@ -235,7 +252,8 @@ export function RoomDialog({
                   <p className="font-mono text-[11px]">{fmtFull(b.check_in)} → {fmtFull(b.check_out)}</p>
                   <div className="mt-2 flex gap-2">
                     <button className={btnGhost} onClick={() => { setEditing(b); setView("edit"); }}>Edit</button>
-                    <button className={btnDanger} onClick={() => doCancel(b)}>Cancel</button>
+                    <button className={btnGhost} onClick={() => doCancel(b)}>Cancel</button>
+                    <button className={btnDanger} onClick={() => doDelete(b)}>Delete</button>
                   </div>
                 </div>
               ))}
@@ -441,17 +459,28 @@ export function HistoryDialog({
               </div>
               <p className="font-mono text-[11px] text-muted-foreground">{b.customers?.phone}</p>
               <p className="font-mono text-[11px]">{fmtFull(b.check_in)} → {fmtFull(b.check_out)}</p>
-              {live && (
+              <div className="mt-1 flex gap-3">
+                {live && (
+                  <button
+                    className="font-mono text-[10px] uppercase text-book hover:underline"
+                    onClick={async () => {
+                      if (!confirm("Cancel this booking?")) return;
+                      try { await cancelBooking(b.id); toast.success("Booking cancelled"); onChanged(); } catch (e) { toast.error(friendlyError(e)); }
+                    }}
+                  >
+                    Cancel booking
+                  </button>
+                )}
                 <button
-                  className="mt-1 font-mono text-[10px] uppercase text-book hover:underline"
+                  className="font-mono text-[10px] uppercase text-book hover:underline"
                   onClick={async () => {
-                    if (!confirm("Cancel this booking?")) return;
-                    try { await cancelBooking(b.id); toast.success("Booking cancelled"); onChanged(); } catch (e) { toast.error(friendlyError(e)); }
+                    if (!confirm("Permanently delete this booking? This cannot be undone.")) return;
+                    try { await deleteBooking(b.id); toast.success("Booking deleted"); onChanged(); } catch (e) { toast.error(friendlyError(e)); }
                   }}
                 >
-                  Cancel booking
+                  Delete
                 </button>
-              )}
+              </div>
             </div>
           );
         })}
