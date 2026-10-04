@@ -47,18 +47,41 @@ function BookingForm({
 }) {
   const now = new Date();
   const tomorrow = new Date(now.getTime() + 24 * 3600 * 1000);
-  const [name, setName] = useState(booking?.customers?.name ?? "");
-  const [phone, setPhone] = useState(booking?.customers?.phone ?? "");
+  const initialMembers = (): { name: string; phone: string }[] => {
+    const m = booking?.booking_members?.map((x) => ({ name: x.name, phone: x.phone })) ?? [];
+    if (!m.length && booking?.customers) m.push({ name: booking.customers.name, phone: booking.customers.phone });
+    while (m.length < 2) m.push({ name: "", phone: "" });
+    return m.slice(0, 4);
+  };
+  const [members, setMembers] = useState(initialMembers);
   const [checkIn, setCheckIn] = useState(toLocalInput(booking?.check_in ?? now));
   const [checkOut, setCheckOut] = useState(toLocalInput(booking?.check_out ?? tomorrow));
   const [busy, setBusy] = useState(false);
+
+  const setMember = (i: number, k: "name" | "phone", v: string) =>
+    setMembers((ms) => ms.map((m, j) => (j === i ? { ...m, [k]: v } : m)));
+
+  async function saveMembers(bookingId: string) {
+    const del = await supabase.from("booking_members").delete().eq("booking_id", bookingId);
+    if (del.error) throw del.error;
+    const ins = await supabase.from("booking_members").insert(
+      members.map((m, i) => ({ booking_id: bookingId, name: m.name.trim(), phone: m.phone.trim(), position: i + 1 })),
+    );
+    if (ins.error) throw ins.error;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const ci = new Date(checkIn);
     const co = new Date(checkOut);
     if (!(co > ci)) { toast.error("Check-out must be after check-in."); return; }
-    if (!/^[+\d][\d\s-]{5,}$/.test(phone.trim())) { toast.error("Enter a valid contact number."); return; }
+    if (members.length < 2 || members.length > 4) { toast.error("A room needs 2 to 4 members."); return; }
+    for (const [i, m] of members.entries()) {
+      if (!m.name.trim()) { toast.error(`Enter a name for member ${i + 1}.`); return; }
+      if (!/^[+\d][\d\s-]{5,}$/.test(m.phone.trim())) { toast.error(`Enter a valid contact number for member ${i + 1}.`); return; }
+    }
+    const name = members[0].name;
+    const phone = members[0].phone;
     setBusy(true);
     try {
       if (booking) {
@@ -69,17 +92,21 @@ function BookingForm({
           .update({ check_in: ci.toISOString(), check_out: co.toISOString() })
           .eq("id", booking.id);
         if (b.error) throw b.error;
+        await saveMembers(booking.id);
         toast.success("Booking updated");
       } else {
         const c = await supabase.from("customers").insert({ name: name.trim(), phone: phone.trim() }).select("id").single();
         if (c.error) throw c.error;
         const b = await supabase
           .from("bookings")
-          .insert({ room_id: roomId, customer_id: c.data.id, check_in: ci.toISOString(), check_out: co.toISOString() });
+          .insert({ room_id: roomId, customer_id: c.data.id, check_in: ci.toISOString(), check_out: co.toISOString() })
+          .select("id")
+          .single();
         if (b.error) {
           await supabase.from("customers").delete().eq("id", c.data.id);
           throw b.error;
         }
+        await saveMembers(b.data.id);
         toast.success("Room booked");
       }
       onDone();
@@ -92,13 +119,29 @@ function BookingForm({
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <div>
-        <label className="label-mono mb-1 block">Customer name</label>
-        <input className="field" required value={name} onChange={(e) => setName(e.target.value)} />
-      </div>
-      <div>
-        <label className="label-mono mb-1 block">Contact number</label>
-        <input className="field font-mono" required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="label-mono">Members ({members.length}/4)</label>
+          {members.length < 4 && (
+            <button type="button" onClick={() => setMembers((ms) => [...ms, { name: "", phone: "" }])} className="font-mono text-[10px] uppercase tracking-wide text-accent hover:underline">
+              + Add member
+            </button>
+          )}
+        </div>
+        {members.map((m, i) => (
+          <div key={i} className="space-y-2 rounded-md border border-border p-3">
+            <div className="flex items-center justify-between">
+              <span className="label-mono">Member {i + 1}{i === 0 ? " (primary)" : ""}</span>
+              {members.length > 2 && (
+                <button type="button" onClick={() => setMembers((ms) => ms.filter((_, j) => j !== i))} className="font-mono text-[10px] uppercase text-book hover:underline">
+                  Remove
+                </button>
+              )}
+            </div>
+            <input className="field" required placeholder="Name" value={m.name} onChange={(e) => setMember(i, "name", e.target.value)} />
+            <input className="field font-mono" required type="tel" placeholder="Contact number" value={m.phone} onChange={(e) => setMember(i, "phone", e.target.value)} />
+          </div>
+        ))}
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
