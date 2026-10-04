@@ -527,3 +527,21 @@ export function HistoryDialog({
     </Shell>
   );
 }
+
+export function MemberList({ b }: { b: Booking }) {
+  const ms = b.booking_members?.length
+    ? b.booking_members
+    : b.customers
+      ? [{ name: b.customers.name, phone: b.customers.phone, position: 1 }]
+      : [];
+  return (
+    <ul className="space-y-1 pb-1">
+      {ms.map((m, i) => (
+        <li key={i} className="flex justify-between gap-2 text-sm">
+          <span className="font-semibold">{i + 1}. {m.name}</span>
+          <span className="font-mono text-xs text-muted-foreground">{m.phone}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
