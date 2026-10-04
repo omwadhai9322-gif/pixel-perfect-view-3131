@@ -80,8 +80,8 @@ function BookingForm({
       if (!m.name.trim()) { toast.error(`Enter a name for member ${i + 1}.`); return; }
       if (!/^[+\d][\d\s-]{5,}$/.test(m.phone.trim())) { toast.error(`Enter a valid contact number for member ${i + 1}.`); return; }
     }
-    const name = members[0].name;
-    const phone = members[0].phone;
+    const name = members[0]!.name;
+    const phone = members[0]!.phone;
     setBusy(true);
     try {
       if (booking) {
