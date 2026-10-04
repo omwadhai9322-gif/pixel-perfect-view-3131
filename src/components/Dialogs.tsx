@@ -273,8 +273,7 @@ export function RoomDialog({
         <div className="space-y-4">
           {cur && (
             <div className="rounded-md border border-book bg-book/10 p-3 space-y-1">
-              <p className="font-semibold">{cur.customers?.name}</p>
-              <p className="font-mono text-xs text-muted-foreground">{cur.customers?.phone}</p>
+              <MemberList b={cur} />
               <p className="font-mono text-xs">{fmtFull(cur.check_in)} → {fmtFull(cur.check_out)}</p>
               <div className="flex gap-2 pt-2">
                 <button className={btnGhost} onClick={() => { setEditing(cur); setView("edit"); }}>Edit</button>
@@ -288,10 +287,7 @@ export function RoomDialog({
               <p className="label-mono">Upcoming</p>
               {upcoming.map((b) => (
                 <div key={b.id} className="rounded-md border border-border p-2 text-sm">
-                  <div className="flex justify-between gap-2">
-                    <span className="font-semibold">{b.customers?.name}</span>
-                    <span className="font-mono text-xs text-muted-foreground">{b.customers?.phone}</span>
-                  </div>
+                  <MemberList b={b} />
                   <p className="font-mono text-[11px]">{fmtFull(b.check_in)} → {fmtFull(b.check_out)}</p>
                   <div className="mt-2 flex gap-2">
                     <button className={btnGhost} onClick={() => { setEditing(b); setView("edit"); }}>Edit</button>
