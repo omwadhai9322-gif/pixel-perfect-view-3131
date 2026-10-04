@@ -11,7 +11,9 @@ export type Booking = {
   status: "active" | "cancelled";
   created_at: string;
   customers: { id: string; name: string; phone: string } | null;
+  booking_members: Member[];
 };
+export type Member = { id?: string; name: string; phone: string; position: number };
 
 export type BoardData = { floors: Floor[]; rooms: Room[]; bookings: Booking[] };
 
@@ -21,13 +23,17 @@ export async function fetchBoard(): Promise<BoardData> {
     supabase.from("rooms").select("id,floor_id,name,sort_order").order("sort_order").order("created_at"),
     supabase
       .from("bookings")
-      .select("id,room_id,customer_id,check_in,check_out,status,created_at,customers(id,name,phone)")
+      .select("id,room_id,customer_id,check_in,check_out,status,created_at,customers(id,name,phone),booking_members(id,name,phone,position)")
       .order("check_in", { ascending: false }),
   ]);
   if (f.error) throw f.error;
   if (r.error) throw r.error;
   if (b.error) throw b.error;
-  return { floors: f.data, rooms: r.data, bookings: b.data as unknown as Booking[] };
+  const bookings = (b.data as unknown as Booking[]).map((x) => ({
+    ...x,
+    booking_members: [...(x.booking_members ?? [])].sort((a, c) => a.position - c.position),
+  }));
+  return { floors: f.data, rooms: r.data, bookings };
 }
 
 export function currentBooking(bookings: Booking[], roomId: string, now = Date.now()) {
