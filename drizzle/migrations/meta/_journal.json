@@ -8,6 +8,13 @@
       "when": 1791042555975,
       "tag": "0000_pg_rooms",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791103740129,
+      "tag": "0001_booking_members",
+      "breakpoints": true
     }
   ]
 }

@@ -160,7 +160,8 @@ function Board() {
               if (!s) return true;
               const custMatch = data.bookings.some(
                 (x) => x.room_id === r.id && x.status === "active" && new Date(x.check_out).getTime() > Date.now() &&
-                  (x.customers?.name.toLowerCase().includes(s) || x.customers?.phone.includes(s)),
+                  (x.customers?.name.toLowerCase().includes(s) || x.customers?.phone.includes(s) ||
+                    x.booking_members.some((m) => m.name.toLowerCase().includes(s) || m.phone.includes(s))),
               );
               return r.name.toLowerCase().includes(s) || custMatch;
             });
@@ -197,7 +198,9 @@ function Board() {
                           <h3 className="text-xl font-bold text-foreground">{r.name}</h3>
                           {b ? (
                             <div className="mt-2 space-y-0.5">
-                              <p className="truncate text-xs font-semibold text-foreground">{b.customers?.name}</p>
+                              {(b.booking_members.length ? b.booking_members.map((m) => m.name) : [b.customers?.name ?? ""]).map((n, i) => (
+                                <p key={i} className="truncate text-xs font-semibold text-foreground">{n}</p>
+                              ))}
                               <p className="text-[10px] font-medium text-muted-foreground">{fmtShort(b.check_in)} – {fmtShort(b.check_out)}</p>
                               <p className="mx-auto mt-1 w-fit rounded bg-book-soft px-2 py-0.5 text-[10px] font-bold uppercase text-book">Booked</p>
                             </div>
